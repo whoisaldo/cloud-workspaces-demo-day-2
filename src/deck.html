@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Cloud Workspaces · Team Cloud · Demo Day 2</title>
+<style>
+:root{
+  --paper:#fafaf9;--ink:#1c1917;--muted:#57534e;--faint:#a8a29e;--line:#d6d3d1;
+  --accent:#047857;--tint:#ecfdf5;--amber:#b45309;--amber-tint:#fef3c7;--stone-tint:#f5f5f4;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:"Avenir Next","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:"SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#e7e5e4;overflow:hidden}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,ul,ol{margin:0}
+a{color:var(--accent);text-underline-offset:4px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+code{font:0.86em var(--mono);background:var(--stone-tint);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+
+/* Fixed 1600x900 canvas, scaled to fit any screen */
+#stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:0 0;background:var(--paper);box-shadow:0 10px 40px rgb(0 0 0 / 12%)}
+.slide{position:absolute;inset:0;padding:72px 96px 88px;display:none;flex-direction:column}
+.slide.active{display:flex}
+.chrome{position:absolute;left:96px;right:96px;bottom:32px;display:flex;justify-content:space-between;font-size:18px;color:var(--faint);pointer-events:none}
+.progress{position:absolute;left:0;top:0;height:6px;background:var(--accent);transition:width .25s ease-out}
+
+.kicker{font-size:22px;letter-spacing:.02em;color:var(--accent);font-weight:600;margin-bottom:18px;display:flex;gap:16px;align-items:center}
+.kicker .who{color:var(--ink)}
+h1{font:normal 132px/1 var(--serif);letter-spacing:-.01em}
+h2{font:normal 64px/1.08 var(--serif);letter-spacing:-.005em;text-wrap:balance;max-width:1400px}
+h3{font-size:30px;line-height:1.2}
+.lede{font-size:34px;line-height:1.4;color:var(--muted);max-width:1150px;text-wrap:pretty}
+.body{font-size:28px;line-height:1.45;text-wrap:pretty}
+.muted{color:var(--muted)}
+.small{font-size:21px;line-height:1.45;color:var(--muted)}
+
+.chip{display:inline-block;font-size:18px;font-weight:600;letter-spacing:.02em;padding:5px 12px;border-radius:999px;white-space:nowrap;vertical-align:middle}
+.chip.live{background:var(--tint);color:var(--accent)}
+.chip.pr{background:var(--amber-tint);color:var(--amber)}
+.chip.draft,.chip.next{background:var(--stone-tint);color:var(--muted);border:1px solid var(--line)}
+
+/* Recap */
+.recap h1{font-size:104px}
+.recap .lede{margin-top:22px}
+.recap .links{position:absolute;right:96px;top:72px;display:flex;gap:28px;font-size:22px}
+
+/* Before / after */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:44px}
+.compare section{padding:36px 40px;border-radius:10px}
+.compare .today{background:var(--stone-tint);border:1px solid var(--line)}
+.compare .tomorrow{background:var(--tint);border:1px solid #a7f3d0}
+.compare h3{font:normal 36px/1.2 var(--serif);margin-bottom:22px}
+.compare ul{padding-left:30px;font-size:27px;line-height:1.45}
+.compare li+li{margin-top:14px}
+.footnote{margin-top:auto;font-size:24px;color:var(--muted);border-top:1px solid var(--line);padding-top:22px}
+.footnote b{color:var(--ink)}
+
+/* Flow */
+.lane{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:stretch}
+.lane+.lane{margin-top:22px}
+.lane-label{font-size:19px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding-top:22px}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.step{position:relative;border:1px solid var(--line);border-radius:10px;padding:20px 20px 18px;background:#fff;display:flex;flex-direction:column}
+.step.instructor{grid-column:1 / span 5;flex-direction:row;align-items:center;gap:28px;padding:18px 24px}
+.step .n{font:normal 22px/1 var(--serif);color:var(--faint);margin-bottom:10px}
+.step h3{font-size:26px;margin-bottom:8px}
+.step p{font-size:19px;line-height:1.4;color:var(--muted)}
+.step .sys{font-size:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-top:auto;padding-top:14px}
+.step .own{font-size:19px;margin-top:8px;line-height:1.35}
+.step .own b{font-weight:600}
+.step .chip{margin-top:10px;align-self:flex-start;font-size:16px}
+.step:not(.instructor):not(:last-child)::after{content:"";position:absolute;right:-15px;top:50%;width:12px;height:12px;border-top:2px solid var(--faint);border-right:2px solid var(--faint);transform:translateY(-50%) rotate(45deg);z-index:1}
+.step.is-live{border-color:#6ee7b7;box-shadow:inset 0 4px 0 var(--accent)}
+.step.is-pr{border-color:#fcd34d;box-shadow:inset 0 4px 0 #f59e0b}
+.step.is-next{border-style:dashed;background:transparent}
+.legend{display:flex;gap:28px;margin-top:auto;font-size:20px;color:var(--muted);align-items:center}
+
+/* Person slides */
+.person{display:grid;grid-template-columns:610px 1fr;gap:56px;margin-top:36px;flex:1;min-height:0}
+.person .text{display:flex;flex-direction:column}
+.why{font-size:27px;line-height:1.45;margin-bottom:24px;text-wrap:pretty}
+.why b{color:var(--accent)}
+.changes{list-style:none;padding:0;font-size:24px;line-height:1.4}
+.changes li{position:relative;padding-left:30px}
+.changes li+li{margin-top:12px}
+.changes li::before{content:"";position:absolute;left:2px;top:.55em;width:12px;height:12px;border-radius:2px;background:var(--accent)}
+.facts{margin-top:auto;display:grid;grid-template-columns:150px 1fr;row-gap:10px;column-gap:18px;font-size:20px;line-height:1.4;border-top:1px solid var(--line);padding-top:20px}
+.facts dt{font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;font-size:16px;padding-top:3px}
+.facts dd{margin:0}
+.shots{display:flex;flex-direction:column;gap:18px;min-height:0}
+.shot{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 8px 28px rgb(28 25 23 / 10%)}
+.shot img{display:block;width:100%;height:auto}
+.cap{font-size:18px;color:var(--muted);margin-top:-6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+
+/* Live */
+.live-slide{justify-content:center;align-items:flex-start}
+.big-links{display:flex;gap:32px;margin-top:56px}
+.big-links a{display:block;width:520px;padding:32px 36px;border:2px solid var(--accent);border-radius:12px;text-decoration:none;color:var(--ink);background:#fff}
+.big-links a:hover{background:var(--tint)}
+.big-links b{display:block;font:normal 44px/1.1 var(--serif);margin-bottom:10px}
+.big-links span{font-size:20px;color:var(--muted);font-family:var(--mono)}
+.steps-live{margin-top:52px;font-size:28px;line-height:1.5;padding-left:36px}
+.steps-live li+li{margin-top:6px}
+
+/* Student compare */
+.student{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:34px}
+.student h3{font-size:26px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.spike{margin-top:auto;display:grid;grid-template-columns:240px 1fr;gap:32px;background:var(--stone-tint);border:1px solid var(--line);border-radius:10px;padding:26px 32px}
+.spike .label{font-size:19px;font-weight:600;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+.spike .label span{display:block;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0;margin-top:6px}
+.spike p{font-size:24px;line-height:1.45}
+
+/* Next */
+.roadmap{display:grid;grid-template-columns:1fr 1fr;gap:20px 56px;margin-top:44px;list-style:none;padding:0}
+.roadmap li{font-size:26px;line-height:1.4;padding:18px 0 18px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:130px 1fr;gap:16px}
+.roadmap li b{font-size:19px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:5px}
+.finish{margin-top:auto;display:flex;align-items:center;gap:22px;background:var(--ink);color:var(--paper);padding:28px 36px;border-radius:10px;font-size:28px;line-height:1.4}
+.finish b{color:#6ee7b7;font-weight:600}
+
+/* Questions */
+.questions{justify-content:center}
+.qlinks{display:grid;grid-template-columns:repeat(2,minmax(0,560px));gap:18px 48px;margin-top:56px;font-size:26px}
+.qlinks a{text-decoration:none;border-bottom:1px solid var(--line);padding:12px 0;display:flex;justify-content:space-between;color:var(--ink)}
+.qlinks a:hover{color:var(--accent)}
+
+/* Backup */
+.backup .kicker{color:var(--muted)}
+.ci{width:100%;border-collapse:collapse;margin-top:36px;font-size:24px}
+.ci th{font-size:17px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 18px 12px 0;font-weight:600}
+.ci td{border-top:1px solid var(--line);padding:16px 18px 16px 0;vertical-align:top;line-height:1.4}
+.ci td:first-child{white-space:nowrap;font-weight:600}
+
+/* Notes + controls */
+.notes{display:none}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:42vh;overflow:auto;background:#1c1917;color:#f5f5f4;font:18px/1.5 var(--sans);padding:18px 28px 22px;display:none;z-index:5}
+#notes.show{display:block}
+#notes h4{margin:0 0 6px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#a8a29e}
+#controls{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:8px;z-index:6;opacity:0;transition:opacity .3s}
+#controls:hover,#controls:focus-within,body.pointer #controls{opacity:1}
+#controls button{font:15px var(--sans);border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 12px;cursor:pointer;color:var(--ink)}
+
+@media print{
+  @page{size:1600px 900px;margin:0}
+  html,body{overflow:visible;background:#fff;height:auto}
+  #stage{position:static;transform:none!important;box-shadow:none;width:1600px;height:auto}
+  .slide{display:flex!important;position:relative;width:1600px;height:900px;break-after:page}
+  .chrome,.progress,#controls,#notes{display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+<div class="progress" id="progress"></div>
+
+<!-- 1. Recap -->
+<section class="slide recap" data-label="Recap">
+  <div class="links"><a href="https://github.com/orgs/pawtograder/projects/2" target="_blank" rel="noopener">Project board ↗</a><a href="https://app.workspaces.cs4535.ripley.cloud" target="_blank" rel="noopener">Team deployment ↗</a></div>
+  <p class="kicker">CS 4535 · Team Cloud: Ali, Naman, Nour, Colin · Demo Day 2</p>
+  <h1>Cloud Workspaces</h1>
+  <p class="lede">Recap: a student signs in with Pawtograder, gets a repo on our Forgejo, codes in Coder, and pushes to get a grade. Courses opt in; everyone else stays on GitHub.</p>
+  <div class="compare">
+    <section class="today">
+      <h3>Demo Day 1 · Oct 14</h3>
+      <ul>
+        <li>Spikes on provisioning, grading, readiness, and hosting</li>
+        <li>A local prototype: a Forgejo repo and a push, with test accounts</li>
+        <li>No sign-in, Coder, or grading yet</li>
+      </ul>
+    </section>
+    <section class="tomorrow">
+      <h3>Today · Oct 29</h3>
+      <ul>
+        <li>Five open PRs against Pawtograder staging</li>
+        <li>Sign in with Pawtograder works on our team deployment</li>
+        <li>Nothing merged yet</li>
+      </ul>
+    </section>
+  </div>
+  <aside class="notes">~20 s. One sentence on the goal, then what changed since Oct 14. Next slide shows where each piece fits.</aside>
+</section>
+
+<!-- 2. Flow -->
+<section class="slide" data-label="Flow">
+  <p class="kicker">Progress since Demo Day 1</p>
+  <h2>Where each step of the student path stands</h2>
+  <div style="margin-top:34px">
+    <div class="lane">
+      <p class="lane-label">Instructor</p>
+      <div class="steps">
+        <div class="step instructor is-pr">
+          <div style="flex:1"><h3 style="margin:0">Choose GitHub or Forgejo + Coder for each assignment</h3><p style="margin-top:4px">Only in courses with the Cloud Workspaces flag on.</p></div>
+          <p class="own"><b>Colin</b> UI demo #1084<br><b>Ali</b> backend #1128</p>
+          <span class="chip pr">Open PRs</span>
+        </div>
+      </div>
+    </div>
+    <div class="lane">
+      <p class="lane-label">Student</p>
+      <div class="steps">
+        <div class="step is-live">
+          <p class="n">1</p><h3>Sign in</h3><p>“Sign in with Pawtograder” on Forgejo and Coder.</p>
+          <p class="sys">Pawtograder → Forgejo, Coder</p>
+          <p class="own"><b>Nour</b> #1164, #1165</p><span class="chip live">Live today</span>
+        </div>
+        <div class="step is-pr">
+          <p class="n">2</p><h3>Get a repo</h3><p>The student's repo is created on Forgejo, never sent to GitHub jobs.</p>
+          <p class="sys">Forgejo</p>
+          <p class="own"><b>Ali</b> #1128 guards</p><span class="chip pr">Open PR</span>
+        </div>
+        <div class="step is-next">
+          <p class="n">3</p><h3>Open Coder</h3><p>A browser workspace starts with the repo cloned.</p>
+          <p class="sys">Coder</p>
+          <p class="own muted">Up next</p><span class="chip next">Next</span>
+        </div>
+        <div class="step is-pr">
+          <p class="n">4</p><h3>Push to grade</h3><p>Forgejo Actions runs the grader. Pawtograder checks the job's token.</p>
+          <p class="sys">Forgejo → Pawtograder</p>
+          <p class="own"><b>Naman</b> #1153</p><span class="chip pr">Open PR</span>
+        </div>
+        <div class="step is-next">
+          <p class="n">5</p><h3>See the grade</h3><p>The score lands in Pawtograder like any other submission.</p>
+          <p class="sys">Pawtograder</p>
+          <p class="own muted">End-to-end run</p><span class="chip next">Next</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="legend"><span><span class="chip live">Live today</span> working in our team deployment</span><span><span class="chip pr">Open PR</span> code in review, not merged</span><span><span class="chip next">Next</span> not built yet</span></div>
+  <aside class="notes">~30 s. This is the map for the rest of the talk. Each of us has a PR that builds one step. Nothing is merged yet, and steps 3 and 5 are still ahead.</aside>
+</section>
+
+<!-- 3. Ali -->
+<section class="slide" data-label="Ali">
+  <p class="kicker"><span class="who">Ali</span> CW-10 · PR #1128, part 1 of 2 <span class="chip pr">Open PR</span></p>
+  <h2>Keep GitHub and Forgejo apart</h2>
+  <div class="person">
+    <div class="text">
+      <p class="why"><b>Why:</b> Pawtograder's background jobs assume every repo is on GitHub. A Forgejo repo must never reach them.</p>
+      <ul class="changes">
+        <li>Every assignment and repo records its host. GitHub stays the default.</li>
+        <li>Forgejo needs the <code>cloud-workspaces</code> course flag. The host locks once repos exist.</li>
+        <li>GitHub-only jobs skip Forgejo rows: repo creation, permission sync, invites, webhooks.</li>
+      </ul>
+      <dl class="facts">
+        <dt>Tested</dt><dd>30 database/API tests and 9 unit tests</dd>
+        <dt>Rollback</dt><dd>Keep the flag off. The schema change is additive.</dd>
+        <dt>Next PR</dt><dd>The real host picker on Create/Edit Assignment</dd>
+      </dl>
+    </div>
+    <div class="shots">
+      <figure class="shot"><img src="{{img:crop-ali-pr.png}}" alt="GitHub PR 1128: CW-10, add assignment provider and GitHub guards, part 1 of 2, open into pawtograder staging." width="890" height="648"></figure>
+      <p class="cap"><a href="https://github.com/pawtograder/platform/pull/1128" target="_blank" rel="noopener">github.com/pawtograder/platform/pull/1128 ↗</a></p>
+    </div>
+  </div>
+  <aside class="notes">~40 s. Changes: provider columns plus guards on every GitHub-only path. Tests: 30 DB/API + 9 unit, from the PR writeup. Rollback: flag off, additive schema; revert backend only if no Forgejo rows exist, otherwise fix forward. Part 2 adds the flag registration and the picker Colin prototyped.</aside>
+</section>
+
+<!-- 4. Naman -->
+<section class="slide" data-label="Naman">
+  <p class="kicker"><span class="who">Naman</span> CW-15 · PR #1153, part 1 of 3 <span class="chip pr">Open PR</span></p>
+  <h2>Only accept grades from runners we trust</h2>
+  <div class="person">
+    <div class="text">
+      <p class="why"><b>Why:</b> After a push, a CI job runs the grader and reports the score. The job proves where it came from with a signed token. Pawtograder has to check that token before it records a grade.</p>
+      <ul class="changes">
+        <li>Checks the token's issuer, signature, and audience.</li>
+        <li>GitHub and our Forgejo each use their own trusted keys.</li>
+        <li>Tokens from any other issuer are rejected.</li>
+      </ul>
+      <dl class="facts">
+        <dt>Tested</dt><dd>15 targeted OIDC tests. All CI checks pass.</dd>
+        <dt>Rollback</dt><dd>Revert the PR. No database migration.</dd>
+        <dt>Next PR</dt><dd>Callers start accepting Forgejo tokens</dd>
+      </dl>
+    </div>
+    <div class="shots">
+      <figure class="shot"><img src="{{img:crop-naman-pr.png}}" alt="GitHub PR 1153: CW-15 part 1 of 3, verify Actions job tokens by issuer and default audience." width="1060" height="750"></figure>
+      <p class="cap"><a href="https://github.com/pawtograder/platform/pull/1153" target="_blank" rel="noopener">github.com/pawtograder/platform/pull/1153 ↗</a></p>
+    </div>
+  </div>
+  <aside class="notes">~40 s. Before: validateOIDCToken always fetched GitHub's keys and never read iss or aud. Now it picks keys by issuer, and a Forgejo instance is trusted only when FORGEJO_URL is set. Callers stay GitHub-only until PR 2.</aside>
+</section>
+
+<!-- 5. Nour -->
+<section class="slide" data-label="Nour">
+  <p class="kicker"><span class="who">Nour</span> CW-04 · PR #1164 app and tests · PR #1165 deployment <span class="chip live">Live today</span></p>
+  <h2>One account: sign in with Pawtograder</h2>
+  <div class="person" style="grid-template-columns:500px 1fr">
+    <div class="text">
+      <p class="why"><b>Why:</b> Students shouldn't create separate Forgejo and Coder accounts. Pawtograder becomes the identity provider for both.</p>
+      <ul class="changes">
+        <li>Turns on Pawtograder's OAuth server and registers Forgejo and Coder.</li>
+        <li>Adds a consent page with Authorize and Deny.</li>
+        <li>Deploys it to our team namespace.</li>
+      </ul>
+      <dl class="facts">
+        <dt>Tested</dt><dd>8 end-to-end sign-in tests pass in our namespace</dd>
+        <dt>Rollback</dt><dd>Turn SSO off in the chart first, then revert the app</dd>
+      </dl>
+    </div>
+    <div class="shots">
+      <div class="pair">
+        <figure class="shot"><img src="{{img:crop-nour-forgejo.png}}" alt="Forgejo sign-in page in the team deployment, with a Sign in with pawtograder button." width="540" height="445"></figure>
+        <figure class="shot"><img src="{{img:crop-nour-coder.png}}" alt="Coder sign-in page in the team deployment, with a Sign in with Pawtograder button." width="540" height="445"></figure>
+      </div>
+      <p class="cap">Forgejo and Coder in our team deployment, captured October 29.</p>
+    </div>
+  </div>
+  <aside class="notes">~20 s here, then switch to the live slide. Rollback detail: OAuth clients, login sources, and accounts created during testing need separate cleanup.</aside>
+</section>
+
+<!-- 6. Live -->
+<section class="slide live-slide" data-label="Live demo">
+  <p class="kicker"><span class="who">Nour</span> Live demo <span class="chip live">Team deployment</span></p>
+  <h2>Live: sign in to Forgejo and Coder with a Pawtograder account</h2>
+  <div class="big-links">
+    <a href="https://git.workspaces.cs4535.ripley.cloud/user/login" target="_blank" rel="noopener"><b>Forgejo ↗</b><span>git.workspaces.cs4535.ripley.cloud</span></a>
+    <a href="https://coder.workspaces.cs4535.ripley.cloud/login" target="_blank" rel="noopener"><b>Coder ↗</b><span>coder.workspaces.cs4535.ripley.cloud</span></a>
+  </div>
+  <ol class="steps-live">
+    <li>Click “Sign in with Pawtograder”.</li>
+    <li>Approve on Pawtograder's consent page.</li>
+    <li>Land back in Forgejo or Coder, signed in.</li>
+  </ol>
+  <p class="footnote" style="width:100%">This shows sign-in only. Workspace startup and grading are not connected yet.</p>
+  <aside class="notes">~2 min. If the network fails, go back one slide: the screenshots are from the same deployment this morning.</aside>
+</section>
+
+<!-- 7. Colin: instructor -->
+<section class="slide" data-label="Colin, instructor">
+  <p class="kicker"><span class="who">Colin</span> Draft UI demo · PR #1084 <span class="chip draft">UI only</span></p>
+  <h2>Instructors choose the host per assignment</h2>
+  <div class="person" style="grid-template-columns:480px 1fr;gap:56px">
+    <div class="text">
+      <p class="why"><b>Why per assignment:</b> An instructor can move one lab to Forgejo + Coder while the rest of the course stays on GitHub. That makes a first try much less risky.</p>
+      <ul class="changes">
+        <li>A Repository host field on Create and Edit Assignment.</li>
+        <li>A host badge on each assignment in Manage Assignments.</li>
+      </ul>
+      <dl class="facts">
+        <dt>Where it went</dt><dd>CW-10 now builds this per-assignment design. #1128 stores the host; its next PR adds the real picker.</dd>
+        <dt>Limit</dt><dd>No Forgejo repos are created yet</dd>
+      </dl>
+    </div>
+    <div class="shots" style="justify-content:center">
+      <figure class="shot"><img src="{{img:crop-colin-form.jpg}}" alt="Create New Assignment form with Repository host set to Forgejo plus Coder workspace." width="810" height="170"></figure>
+      <p class="cap">Create New Assignment: “Repository host: Forgejo + Coder workspace”</p>
+      <figure class="shot"><img src="{{img:crop-colin-badges.jpg}}" alt="Manage Assignments table: Assignment 1 shows a Forgejo plus Coder badge, Lab 1 shows GitHub." width="760" height="118"></figure>
+      <p class="cap">Manage Assignments: one course, two hosts</p>
+    </div>
+  </div>
+  <aside class="notes">~25 s. Colin's draft PR, not for merge: UI only, tested locally on the seeded Micro Test Class. Switching Assignment 1 on Edit saved git_provider = 'forgejo' in the database.</aside>
+</section>
+
+<!-- 8. Colin: student -->
+<section class="slide" data-label="Colin, student">
+  <p class="kicker"><span class="who">Colin</span> Draft UI demo · PR #1084 <span class="chip draft">UI only</span></p>
+  <h2>What a student sees on each kind of assignment</h2>
+  <div class="student">
+    <div>
+      <h3>Forgejo assignment <span class="chip live">New</span></h3>
+      <figure class="shot"><img src="{{img:crop-colin-student-forgejo.jpg}}" alt="Student view of a Forgejo assignment: a Your workspace card with the Forgejo repository, a note that no GitHub account is needed, and an Open in Coder button." width="812" height="262"></figure>
+      <p class="cap" style="margin-top:10px">No GitHub banners. One button opens the workspace. (Placeholder for now.)</p>
+    </div>
+    <div>
+      <h3>GitHub assignment, same course <span class="chip next">Unchanged</span></h3>
+      <figure class="shot"><img src="{{img:crop-colin-student-github.jpg}}" alt="Student view of a GitHub assignment: the Connect to GitHub banner and a repository that requires GitHub authorization." width="1046" height="360"></figure>
+      <p class="cap" style="margin-top:10px">Exactly what students see today.</p>
+    </div>
+  </div>
+  <div class="spike">
+    <p class="label">Colin's readiness spike<span>Oct 2 to 13</span></p>
+    <p>“Ready” has to mean the student can push, not just that the repo exists. Pawtograder marked GitHub repos ready right after creating them. The fix is to read access back from GitHub or Forgejo. Colin's next tickets: show why a workspace isn't ready (CW-22), and which features Forgejo assignments don't support yet (CW-50).</p>
+  </div>
+  <aside class="notes">~20 s. Open in Coder is a toast for now (CW-17). The spike is issue #1122.</aside>
+</section>
+
+<!-- 9. Next -->
+<section class="slide" data-label="Next">
+  <p class="kicker">What comes next</p>
+  <h2>Next: connect the steps into one full run</h2>
+  <ul class="roadmap">
+    <li><b>Ali</b><span>Course flag and the real host picker (CW-10, part 2)</span></li>
+    <li><b>Naman</b><span>Let Forgejo tokens through to submissions (CW-15, parts 2 and 3)</span></li>
+    <li><b>Nour</b><span>Get sign-in merged (#1164, #1165)</span></li>
+    <li><b>Colin</b><span>Workspace-not-ready states and unsupported features (CW-22, CW-50)</span></li>
+    <li><b>Team</b><span>Create Forgejo accounts and repos for students (#1092, #1093)</span></li>
+    <li><b>Team</b><span>Start Coder with the repo cloned (CW-17)</span></li>
+  </ul>
+  <div class="finish"><span>Goal for Nov 23:</span><span><b>sign in → repo → Coder → push → grade</b>, deployed and ready for user testing.</span></div>
+  <aside class="notes">~20 s. Be clear that this is progress toward the full workflow, not a claim that it shipped.</aside>
+</section>
+
+<!-- 10. Questions -->
+<section class="slide questions" data-label="Questions">
+  <p class="kicker">Team Cloud</p>
+  <h1 style="font-size:112px">Questions?</h1>
+  <div class="qlinks">
+    <a href="https://github.com/pawtograder/platform/pull/1128" target="_blank" rel="noopener"><span>Ali · provider boundaries</span><span>#1128 ↗</span></a>
+    <a href="https://github.com/pawtograder/platform/pull/1153" target="_blank" rel="noopener"><span>Naman · grading tokens</span><span>#1153 ↗</span></a>
+    <a href="https://github.com/pawtograder/platform/pull/1164" target="_blank" rel="noopener"><span>Nour · sign-in</span><span>#1164 · #1165 ↗</span></a>
+    <a href="https://github.com/pawtograder/platform/pull/1084" target="_blank" rel="noopener"><span>Colin · per-assignment UI</span><span>#1084 ↗</span></a>
+    <a href="https://github.com/orgs/pawtograder/projects/2" target="_blank" rel="noopener"><span>Project board</span><span>↗</span></a>
+    <a href="https://app.workspaces.cs4535.ripley.cloud" target="_blank" rel="noopener"><span>Team deployment</span><span>↗</span></a>
+  </div>
+</section>
+
+<!-- 11. Backup: CI -->
+<section class="slide backup" data-label="Backup: status">
+  <p class="kicker">Backup · PR status, checked October 29, 10 AM</p>
+  <h2>Where each PR stands</h2>
+  <table class="ci">
+    <thead><tr><th>PR</th><th>Checks</th><th>Rollback</th></tr></thead>
+    <tbody>
+      <tr><td>#1128 Ali</td><td>Lint, unit, and E2E pass. The Argos visual check fails.</td><td>Flag off, keep the additive schema. Revert backend only if no Forgejo rows exist; otherwise fix forward.</td></tr>
+      <tr><td>#1153 Naman</td><td>All checks pass.</td><td>Revert. No migration.</td></tr>
+      <tr><td>#1164 Nour</td><td>Lint, unit, and E2E pass. The Argos visual check fails.</td><td rowspan="2">Disable SSO in the chart before reverting the app. Clean up OAuth clients, login sources, and accounts separately.</td></tr>
+      <tr><td>#1165 Nour</td><td>All checks pass.</td></tr>
+      <tr><td>#1084 Colin</td><td>Draft demo, not for merge.</td><td>Nothing to roll back.</td></tr>
+    </tbody>
+  </table>
+  <p class="footnote">Test counts on earlier slides come from each PR's writeup, not a new run for this deck. All five PRs are open; none is merged.</p>
+</section>
+
+<!-- 12. Backup: prototype -->
+<section class="slide backup" data-label="Backup: Oct 14">
+  <p class="kicker">Backup · Demo Day 1 prototype, October 14</p>
+  <h2>Where we started: a local prototype with synthetic accounts</h2>
+  <div class="pair" style="margin-top:36px;max-width:1120px">
+    <div><figure class="shot"><img src="{{img:proto-ready-repo.png}}" alt="October 14 local prototype: synthetic student Alex has a ready Forgejo repository." width="1440" height="940"></figure><p class="cap" style="margin-top:12px">A ready student repo on Forgejo</p></div>
+    <div><figure class="shot"><img src="{{img:proto-commit-pushed.png}}" alt="October 14 local prototype: the synthetic student's commit and demo-note.txt are visible in Forgejo." width="1440" height="940"></figure><p class="cap" style="margin-top:12px">A student commit pushed to Forgejo</p></div>
+  </div>
+  <p class="footnote">Local captures of prototype <a href="https://github.com/pawtograder/platform/pull/1083" target="_blank" rel="noopener">#1083</a> at <code>ce32af8</code>. Not today's SSO flow, Coder startup, or grading.</p>
+</section>
+
+<div class="chrome"><span>Team Cloud · Cloud Workspaces · Demo Day 2</span><span id="count"></span></div>
+</div>
+
+<div id="notes" aria-live="polite"><h4>Speaker notes</h4><div id="notes-body"></div></div>
+<div id="controls">
+  <button type="button" id="prev" aria-label="Previous slide">←</button>
+  <button type="button" id="next" aria-label="Next slide">→</button>
+  <button type="button" id="toggle-notes" aria-label="Toggle speaker notes">Notes</button>
+  <button type="button" id="full" aria-label="Toggle full screen">Full screen</button>
+</div>
+
+<script>
+const stage=document.getElementById('stage')
+const slides=[...document.querySelectorAll('.slide')]
+const notes=document.getElementById('notes')
+let current=0
+
+function fit(){
+  const s=Math.min(innerWidth/1600,innerHeight/900)
+  stage.style.transform=`translate(${-800*s}px,${-450*s}px) scale(${s})`
+}
+function show(i){
+  current=Math.max(0,Math.min(slides.length-1,i))
+  slides.forEach((el,k)=>el.classList.toggle('active',k===current))
+  document.getElementById('count').textContent=`${current+1} / ${slides.length}`
+  document.getElementById('progress').style.width=`${(current+1)/slides.length*100}%`
+  const n=slides[current].querySelector('.notes')
+  document.getElementById('notes-body').textContent=n?n.textContent:'No notes for this slide.'
+  document.title=`${slides[current].dataset.label} · Cloud Workspaces`
+  history.replaceState(null,'',`#${current+1}`)
+}
+function fullscreen(){
+  if(document.fullscreenElement)document.exitFullscreen()
+  else document.documentElement.requestFullscreen?.()
+}
+
+addEventListener('resize',fit)
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return
+  if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();show(current+1)}
+  else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(current-1)}
+  else if(e.key==='Home')show(0)
+  else if(e.key==='End')show(slides.length-1)
+  else if(e.key==='n'||e.key==='N')notes.classList.toggle('show')
+  else if(e.key==='f'||e.key==='F')fullscreen()
+})
+document.getElementById('prev').onclick=()=>show(current-1)
+document.getElementById('next').onclick=()=>show(current+1)
+document.getElementById('toggle-notes').onclick=()=>notes.classList.toggle('show')
+document.getElementById('full').onclick=fullscreen
+
+let idle
+addEventListener('mousemove',()=>{document.body.classList.add('pointer');clearTimeout(idle);idle=setTimeout(()=>document.body.classList.remove('pointer'),2000)})
+
+fit()
+show((parseInt(location.hash.slice(1),10)||1)-1)
+</script>
+</body>
+</html>
