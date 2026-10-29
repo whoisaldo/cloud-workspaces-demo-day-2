@@ -412,15 +412,15 @@ h3{font-size:30px;line-height:1.2}
 
 <!-- 11. Backup: CI -->
 <section class="slide backup" data-label="Backup: status">
-  <p class="kicker">Backup · PR status, checked October 29, 10 AM</p>
+  <p class="kicker">Backup · PR status, checked October 29, 10:55 AM</p>
   <h2>Where each PR stands</h2>
   <table class="ci">
     <thead><tr><th>PR</th><th>Checks</th><th>Rollback</th></tr></thead>
     <tbody>
-      <tr><td>#1128 Ali</td><td>Lint, unit, and E2E pass. The Argos visual check fails.</td><td>Flag off, keep the additive schema. Revert backend only if no Forgejo rows exist; otherwise fix forward.</td></tr>
+      <tr><td>#1128 Ali</td><td>Lint and unit tests pass. E2E is re-running after this morning's staging merge. No review changes are pending.</td><td>Flag off, keep the additive schema. Revert backend only if no Forgejo rows exist; otherwise fix forward.</td></tr>
       <tr><td>#1153 Naman</td><td>All checks pass.</td><td>Revert. No migration.</td></tr>
-      <tr><td>#1164 Nour</td><td>Lint, unit, and E2E pass. The Argos visual check fails.</td><td rowspan="2">Disable SSO in the chart before reverting the app. Clean up OAuth clients, login sources, and accounts separately.</td></tr>
-      <tr><td>#1165 Nour</td><td>All checks pass.</td></tr>
+      <tr><td>#1164 Nour</td><td>Lint and unit tests pass. E2E is re-running.</td><td rowspan="2">Disable SSO in the chart before reverting the app. Clean up OAuth clients, login sources, and accounts separately.</td></tr>
+      <tr><td>#1165 Nour</td><td>Lint and unit tests pass. E2E is re-running.</td></tr>
       <tr><td>#1084 Colin</td><td>Draft demo, not for merge.</td><td>Nothing to roll back.</td></tr>
     </tbody>
   </table>
